@@ -1,7 +1,6 @@
 package com.example.getjsontest;
 
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -16,8 +15,6 @@ import org.json.JSONObject;
 import java.util.concurrent.ExecutionException;
 
 public class MainActivity extends AppCompatActivity {
-
-    public static final String PREFS_NAME = "MyPrefsFile";
 
     String jsonShortPlot;
     String jsonLongPlot;
@@ -49,13 +46,16 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle outState) {
         super.onCreate(outState);
         setContentView(R.layout.activity_main);
+        searchButton = (Button) findViewById(R.id.searchButton);
+        searchText = (EditText) findViewById(R.id.searchText);
 
-        if (outState != null && jsonLongPlot != null) {
-            jsonLongPlot = outState.getString("retrievalname");
+        if (outState != null) {
+            jsonLongPlot = outState.getString("longplot");
+            jsonShortPlot = outState.getString("shortplot");
             addToFave = (Button) findViewById(R.id.addToFaves);
             addToFave.setVisibility(View.INVISIBLE);
             try {
-                extractJson();
+                extractJson(jsonLongPlot);
             } catch (JSONException e) {
                 e.printStackTrace();
             }
@@ -63,8 +63,7 @@ public class MainActivity extends AppCompatActivity {
             setContent();
         }
         else {
-            searchButton = (Button) findViewById(R.id.searchButton);
-            searchText = (EditText) findViewById(R.id.searchText);
+            Log.d("TAG", "oncreate else statement reached");
             addToFave = (Button) findViewById(R.id.addToFaves);
             addToFave.setVisibility(View.INVISIBLE);
         }
@@ -73,7 +72,8 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
-        outState.putString("retrievalname", jsonLongPlot);
+        outState.putString("longplot", jsonLongPlot);
+        outState.putString("shortplot", jsonShortPlot);
     }
 
     public void onSearchButtonClick(View view) throws JSONException {
@@ -83,7 +83,7 @@ public class MainActivity extends AppCompatActivity {
         getShortPlot(input2); //gets short plot
         validateMovie(); //to do
         if (response) {
-            extractJson();
+            extractJson(jsonLongPlot);
             findViews();
             setContent();
         }
@@ -94,15 +94,10 @@ public class MainActivity extends AppCompatActivity {
 
     public void addMovieToFave(View view) throws JSONException {
         //adds searched movie to watchlist
-        SharedPreferences sharedPref = getSharedPreferences(PREFS_NAME, 0);
-        SharedPreferences.Editor editor = sharedPref.edit();
-        editor.putString("movieJson", jsonLongPlot);
-        editor.apply();
-
         Intent goToWatchlist = new Intent(this, WatchlistActivity.class);
         goToWatchlist.putExtra("title", movieTitle);
-        goToWatchlist.putExtra("year", movieYear);
-        goToWatchlist.putExtra("plot", moviePlotShort);
+        //goToWatchlist.putExtra("year", movieYear);
+        //goToWatchlist.putExtra("plot", moviePlotShort);
         startActivity(goToWatchlist);
     }
 
@@ -153,9 +148,9 @@ public class MainActivity extends AppCompatActivity {
         addToFave.setVisibility(View.VISIBLE);
     }
 
-    public void extractJson() throws JSONException {
+    public void extractJson(String jsonToExtract) throws JSONException {
         //extracts data from json to put in views
-        JSONObject jObj = new JSONObject(jsonLongPlot);
+        JSONObject jObj = new JSONObject(jsonToExtract);
         movieTitle = jObj.getString("Title");
         movieYear = jObj.getString("Year");
         moviePlot = jObj.getString("Plot");

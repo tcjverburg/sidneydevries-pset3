@@ -15,7 +15,7 @@
         android:textAppearance="?android:attr/textAppearanceLarge"
         android:text="@string/My_watchlist"
         android:id="@+id/textView"
-        android:textSize="24sp" />
+        android:textSize="30sp" />
 
     <android.support.v7.widget.RecyclerView
         android:layout_width="match_parent"

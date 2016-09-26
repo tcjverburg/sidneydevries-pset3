@@ -1,15 +1,23 @@
 package com.example.getjsontest;
 
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
+import android.widget.Toast;
 
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Set;
 
 public class WatchlistActivity extends AppCompatActivity {
 
+    public static final String PREFS_NAME = "MyPrefsFile";
     RecyclerView recyclerview;
     MyAdapter myadapter;
     LinearLayoutManager layoutmanager;
@@ -19,25 +27,50 @@ public class WatchlistActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.watchlist_view);
 
-        ArrayList titles = new ArrayList();
-        ArrayList years = new ArrayList();
-        ArrayList plots = new ArrayList();
+        Intent receiveData = getIntent();
+        String receivedTitle = receiveData.getStringExtra("title");
 
-        Intent recieveData = getIntent();
-        String recievedTitle = recieveData.getStringExtra("title");
-        String recievedYear = recieveData.getStringExtra("year");
-        String recievedPlot = recieveData.getStringExtra("plot");
+        SharedPreferences sharedPref = getSharedPreferences(PREFS_NAME, 0);
+        Set<String> receivedset;
+        receivedset = sharedPref.getStringSet("titles", null);
 
-        titles.add(recievedTitle);
-        years.add(recievedYear);
-        plots.add(recievedPlot);
+        ArrayList<String> titles = new ArrayList<String>();
+
+        for (Iterator<String> iterator = receivedset.iterator(); iterator.hasNext();) {
+            String str = iterator.next();
+            if (str == null) {
+                iterator.remove();
+            } else {
+                titles.add(str);
+            }
+        }
+
+        if (receivedTitle != null && titles.contains(receivedTitle) == false ) {
+            Log.d("test", "title contains receivedtitle equals false");
+            titles.add(receivedTitle); //hier komt de null erin
+        }
+        else if (titles.contains(receivedTitle)){
+            Toast.makeText(this, "Movie already exists in watchlist",
+                    Toast.LENGTH_LONG).show();
+        }
+        saveArrayList(titles);
+
 
         recyclerview = (RecyclerView) findViewById(R.id.myrv);
         recyclerview.setHasFixedSize(true);
-        myadapter = new MyAdapter(titles, years, plots);
+        myadapter = new MyAdapter(titles); //, years, plots
         layoutmanager = new LinearLayoutManager(this);
         recyclerview.setLayoutManager(layoutmanager);
         recyclerview.setAdapter(myadapter);
+    }
+
+    public void saveArrayList(ArrayList list) {
+        SharedPreferences sharedPref = getSharedPreferences(PREFS_NAME, 0);
+        SharedPreferences.Editor editor = sharedPref.edit();
+        Set<String> titleset = new HashSet<>();
+        titleset.addAll(list);
+        editor.putStringSet("titles", titleset);
+        editor.apply();
     }
 }
 
