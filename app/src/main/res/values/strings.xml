@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">getjsontest</string>
+    <string name="search">Search</string>
+    <string name="My_watchlist">My watchlist</string>
+</resources>
