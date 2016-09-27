@@ -3,12 +3,13 @@ package com.example.getjsontest;
 import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
+
 import com.squareup.picasso.Picasso;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -16,19 +17,15 @@ import java.util.concurrent.ExecutionException;
 
 public class MainActivity extends AppCompatActivity {
 
-    String jsonShortPlot;
     String jsonLongPlot;
     String url;
-    String url2;
     Button searchButton;
     EditText searchText;
     String input;
-    String input2;
 
     String movieTitle;
     String movieYear;
     String moviePlot;
-    String moviePlotShort;
     String movieDirector;
     String movieActors;
     String moviePoster;
@@ -51,7 +48,6 @@ public class MainActivity extends AppCompatActivity {
 
         if (outState != null) {
             jsonLongPlot = outState.getString("longplot");
-            jsonShortPlot = outState.getString("shortplot");
             addToFave = (Button) findViewById(R.id.addToFaves);
             addToFave.setVisibility(View.INVISIBLE);
             try {
@@ -63,7 +59,6 @@ public class MainActivity extends AppCompatActivity {
             setContent();
         }
         else {
-            Log.d("TAG", "oncreate else statement reached");
             addToFave = (Button) findViewById(R.id.addToFaves);
             addToFave.setVisibility(View.INVISIBLE);
         }
@@ -73,22 +68,19 @@ public class MainActivity extends AppCompatActivity {
     public void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
         outState.putString("longplot", jsonLongPlot);
-        outState.putString("shortplot", jsonShortPlot);
     }
 
     public void onSearchButtonClick(View view) throws JSONException {
         input = searchText.getText().toString();
-        input2 = searchText.getText().toString(); //second input for short plot
-        getJsonFromUrl(input);
-        getShortPlot(input2); //gets short plot
-        validateMovie(); //to do
+        validateMovie(input);
         if (response) {
+            getJsonFromUrl(input);
             extractJson(jsonLongPlot);
             findViews();
             setContent();
         }
         else {
-            jsonLongPlot = null;
+            Toast.makeText(this, "Movie not found", Toast.LENGTH_LONG).show();
         }
     }
 
@@ -96,8 +88,6 @@ public class MainActivity extends AppCompatActivity {
         //adds searched movie to watchlist
         Intent goToWatchlist = new Intent(this, WatchlistActivity.class);
         goToWatchlist.putExtra("title", movieTitle);
-        //goToWatchlist.putExtra("year", movieYear);
-        //goToWatchlist.putExtra("plot", moviePlotShort);
         startActivity(goToWatchlist);
     }
 
@@ -111,20 +101,6 @@ public class MainActivity extends AppCompatActivity {
         } catch (InterruptedException | ExecutionException e) {
             e.printStackTrace();
         }
-    }
-
-    public void getShortPlot(String input2) throws JSONException {
-        //gets short plot to use in watchlist
-        MyAsyncTask asyncTask = new MyAsyncTask();
-        input2 = input2.replace(" ", "+");
-        url2 = "http://www.omdbapi.com/?t="+input2+"&y=&plot=short&r=json";
-        try {
-            jsonShortPlot = asyncTask.execute(url2).get();
-        } catch (InterruptedException | ExecutionException e) {
-            e.printStackTrace();
-        }
-        JSONObject jObj = new JSONObject(jsonShortPlot);
-        moviePlotShort = jObj.getString("Plot");
     }
 
     public void findViews() {
@@ -159,8 +135,9 @@ public class MainActivity extends AppCompatActivity {
         moviePoster = jObj.getString("Poster");
     }
 
-    public void validateMovie() throws JSONException {
+    public void validateMovie(String input) throws JSONException {
         //checks if movie exists in ombd
+        getJsonFromUrl(input);
         JSONObject jObj = new JSONObject(jsonLongPlot);
         response = jObj.getBoolean("Response");
     }
