@@ -3,6 +3,7 @@ package com.example.getjsontest;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 import com.squareup.picasso.Picasso;
@@ -36,9 +37,7 @@ public class WatchlistItem extends AppCompatActivity {
         setContentView(R.layout.watchlist_item_view);
 
         Intent receiveData = getIntent();
-        String receivedTitle = receiveData.getStringExtra("title");
-
-        input = receivedTitle;
+        input = receiveData.getStringExtra("title");
         getJsonFromUrl(input);
         try {
             extractJson(jsonLongPlot);
@@ -90,5 +89,12 @@ public class WatchlistItem extends AppCompatActivity {
         movieDirector = jObj.getString("Director");
         movieActors = jObj.getString("Actors");
         moviePoster = jObj.getString("Poster");
+    }
+
+    public void removeMovie(View view) {
+        Intent removeMovie = new Intent(this, WatchlistActivity.class);
+        removeMovie.putExtra("toBeRemoved", movieTitle);
+        startActivity(removeMovie);
+        finish();
     }
 }

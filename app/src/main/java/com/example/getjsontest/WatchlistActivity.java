@@ -1,18 +1,16 @@
 package com.example.getjsontest;
 
-import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.widget.Toast;
-
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Objects;
 import java.util.Set;
 
 public class WatchlistActivity extends AppCompatActivity {
@@ -21,6 +19,7 @@ public class WatchlistActivity extends AppCompatActivity {
     RecyclerView recyclerview;
     MyAdapter myadapter;
     LinearLayoutManager layoutmanager;
+    String toRemove;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -29,36 +28,40 @@ public class WatchlistActivity extends AppCompatActivity {
 
         Intent receiveData = getIntent();
         String receivedTitle = receiveData.getStringExtra("title");
+        toRemove = receiveData.getStringExtra("toBeRemoved");
 
         SharedPreferences sharedPref = getSharedPreferences(PREFS_NAME, 0);
         Set<String> receivedset;
         receivedset = sharedPref.getStringSet("titles", null);
-
         ArrayList<String> titles = new ArrayList<String>();
 
-        for (Iterator<String> iterator = receivedset.iterator(); iterator.hasNext();) {
-            String str = iterator.next();
-            if (str == null) {
-                iterator.remove();
-            } else {
-                titles.add(str);
+        if(receivedset == null || receivedset.isEmpty() && receivedTitle != null){
+            titles.add(receivedTitle);
+            saveArrayList(titles);
+        }
+        else {
+            for (Iterator<String> iterator = receivedset.iterator(); iterator.hasNext(); ) {
+                String str = iterator.next();
+                if (str == null) {
+                    iterator.remove();
+                } else {
+                    titles.add(str);
+                }
             }
-        }
 
-        if (receivedTitle != null && titles.contains(receivedTitle) == false ) {
-            Log.d("test", "title contains receivedtitle equals false");
-            titles.add(receivedTitle); //hier komt de null erin
+            if (!titles.contains(receivedTitle)) {
+                titles.add(receivedTitle);
+            }
+            else if (titles.contains(receivedTitle)) {
+                Toast.makeText(this, "Movie already exists in watchlist",
+                        Toast.LENGTH_LONG).show();
+            }
+            saveArrayList(titles);
         }
-        else if (titles.contains(receivedTitle)){
-            Toast.makeText(this, "Movie already exists in watchlist",
-                    Toast.LENGTH_LONG).show();
-        }
-        saveArrayList(titles);
-
 
         recyclerview = (RecyclerView) findViewById(R.id.myrv);
         recyclerview.setHasFixedSize(true);
-        myadapter = new MyAdapter(titles); //, years, plots
+        myadapter = new MyAdapter(titles);
         layoutmanager = new LinearLayoutManager(this);
         recyclerview.setLayoutManager(layoutmanager);
         recyclerview.setAdapter(myadapter);
@@ -68,7 +71,20 @@ public class WatchlistActivity extends AppCompatActivity {
         SharedPreferences sharedPref = getSharedPreferences(PREFS_NAME, 0);
         SharedPreferences.Editor editor = sharedPref.edit();
         Set<String> titleset = new HashSet<>();
-        titleset.addAll(list);
+        //remove null values saved in list
+        for (Iterator<String> iterator = list.iterator(); iterator.hasNext(); ) {
+            String str = iterator.next();
+            if (str == null) {
+                iterator.remove();
+            }
+            else if (Objects.equals(str, toRemove)) {
+                iterator.remove();
+                Toast.makeText(this, "Movie removed", Toast.LENGTH_LONG).show();
+            }
+            else {
+                titleset.add(str);
+            }
+        }
         editor.putStringSet("titles", titleset);
         editor.apply();
     }
